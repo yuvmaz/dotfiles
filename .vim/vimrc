@@ -4,22 +4,22 @@ let mapleader = ";"
 
 call plug#begin()
 
-Plug 'vim-airline/vim-airline'
-Plug 'rafi/awesome-vim-colorschemes'
-Plug 'easymotion/vim-easymotion'
-Plug 'tpope/vim-fugitive'
-Plug 'junegunn/fzf'
-Plug 'junegunn/fzf.vim'
+Plug 'alx741/vim-rustfmt'
 Plug 'davidhalter/jedi-vim'
+Plug 'dylanaraps/wal.vim'
+Plug 'easymotion/vim-easymotion'
+Plug 'honza/vim-snippets'
+Plug 'junegunn/fzf.vim'
+Plug 'junegunn/fzf'
+Plug 'neoclide/coc.nvim', {'branch': 'release'}
 Plug 'preservim/nerdcommenter'
 Plug 'preservim/nerdtree'
+Plug 'rafi/awesome-vim-colorschemes'
 Plug 'rust-lang/rust.vim'
-Plug 'tpope/vim-surround'
 Plug 'SirVer/ultisnips'
-Plug 'fatih/vim-go'
-Plug 'alx741/vim-rustfmt'
-Plug 'honza/vim-snippets'
-Plug 'dylanaraps/wal.vim'
+Plug 'tpope/vim-fugitive'
+Plug 'tpope/vim-surround'
+Plug 'vim-airline/vim-airline'
 
 
 call plug#end() 
