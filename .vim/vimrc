@@ -16,10 +16,10 @@ Plug 'preservim/nerdtree'
 Plug 'rust-lang/rust.vim'
 Plug 'tpope/vim-surround'
 Plug 'SirVer/ultisnips'
-Plug 'fatih/vim-go'
 Plug 'alx741/vim-rustfmt'
 Plug 'honza/vim-snippets'
 Plug 'dylanaraps/wal.vim'
+Plug 'neoclide/coc.nvim', {'branch': 'release'}
 
 
 call plug#end() 
