@@ -4,6 +4,7 @@ let mapleader = ";"
 
 call plug#begin()
 
+
 Plug 'alx741/vim-rustfmt'
 Plug 'davidhalter/jedi-vim'
 Plug 'dylanaraps/wal.vim'
@@ -20,7 +21,6 @@ Plug 'SirVer/ultisnips'
 Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-surround'
 Plug 'vim-airline/vim-airline'
-
 
 call plug#end() 
 
