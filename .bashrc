@@ -118,3 +118,4 @@ fi
 
 export PATH="$HOME/bin:$HOME/bin/$(hostname):$HOME/bin/$(uname -m):$PATH"
 
+. "$HOME/.cargo/env"

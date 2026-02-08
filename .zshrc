@@ -71,6 +71,8 @@ alias k=kubectl
 alias cat=bat
 alias ls=eza
 alias ll="eza -lh --time-style=long-iso -smodified -r"
+alias vi=vim
+alias pcat="cat --plain --pager=" 
 
 source <(kubectl completion zsh)
 compdef k=kubectl
@@ -143,4 +145,4 @@ fzf-history-widget() {
 zle -N fzf-history-widget
 bindkey '^R' fzf-history-widget
 
-export PATH="$HOME/bin:$HOME/bin/$(hostname):$HOME/bin/$(uname -m):$PATH"
+export PATH="$HOME/bin:$HOME/bin/$(hostname):$HOME/.cargo/bin;$HOME/bin/$(uname -m):$PATH"
