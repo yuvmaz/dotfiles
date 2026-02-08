@@ -1,5 +1,14 @@
-syntax on
+" ============================
+" Basic Vim settings
+" ============================
+set nocompatible          " better Vim behavior
 filetype plugin indent on
+syntax on
+set hidden                " allow background buffers
+set updatetime=300        " faster completion
+set signcolumn=yes        " show LSP signs
+set number
+set encoding=utf-8
 let mapleader = ";"
 
 call plug#begin()
