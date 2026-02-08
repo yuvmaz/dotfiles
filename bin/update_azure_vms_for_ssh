@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+import subprocess
+import json
+from pathlib import Path
+
+# ===== CONFIG =====
+SSH_KEY_PATH = Path.home() / ".ssh/id_rsa"
+SSH_CONFIG_FILE = Path.home() / ".ssh/azure.conf"
+# ==================
+
+def fetch_azure_vms():
+    """Fetch Azure VMs with public IPs, admin usernames, and resource groups."""
+    try:
+        result = subprocess.run(
+            ["az", "vm", "list", "--show-details", "--output", "json"],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        return json.loads(result.stdout)
+    except FileNotFoundError:
+        print("Azure CLI not found. Please install and login with 'az login'.")
+        return []
+    except subprocess.CalledProcessError as e:
+        print(f"Error fetching Azure VMs: {e.stderr}")
+        return []
+
+def generate_ssh_entry(vm_name, ip_address, vm_user, resource_group):
+    """Generate a single SSH config entry with a comment for the resource group."""
+    return (
+        f"# Resource Group: {resource_group}\n"
+        f"Host {vm_name}\n"
+        f"    HostName {ip_address}\n"
+        f"    User {vm_user}\n"
+        f"    IdentityFile {SSH_KEY_PATH}\n"
+        f"    StrictHostKeyChecking no\n\n"
+    )
+
+def main():
+    vms = fetch_azure_vms()
+    if not vms:
+        return
+
+    entries = []
+
+    for vm in vms:
+        vm_name = vm.get("name")
+        ip_address = vm.get("publicIps")          # public IP from --show-details
+        vm_user = vm.get("osProfile", {}).get("adminUsername")
+        resource_group = vm.get("resourceGroup", "unknown")
+
+        if not vm_name or not ip_address or not vm_user:
+            print(f"Skipping VM {vm_name or 'unknown'} (missing IP or username)")
+            continue
+
+        print(f"Found VM: {vm_name} | IP: {ip_address} | User: {vm_user} | RG: {resource_group}")
+        entries.append(generate_ssh_entry(vm_name, ip_address, vm_user, resource_group))
+
+    if entries:
+        SSH_CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with open(SSH_CONFIG_FILE, "w") as f:
+            f.writelines(entries)
+        print(f"SSH config updated: {SSH_CONFIG_FILE}")
+    else:
+        print("No valid SSH entries were generated.")
+
+if __name__ == "__main__":
+    main()
+
