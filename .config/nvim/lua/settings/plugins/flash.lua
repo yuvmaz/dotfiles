@@ -1,57 +1,147 @@
--- File: lua/plugins/flash.lua
--- Plugin config for flash.nvim with EasyMotion-style mappings
-
+-- Enhanced navigation with search labels and easymotion-style motions
+-- Matches easymotion behavior: directional searches, no wrap-around
 return {
   "folke/flash.nvim",
   event = "VeryLazy",
-  opts = {},
   config = function()
     local flash = require("flash")
 
-    -- EasyMotion-style single-character jump across buffer
-    vim.keymap.set("n", "<Leader><Leader>f", function()
-      flash.jump({
-        search = { mode = "char", multi_line = true },
-        label = { before = false, after = true, uppercase = true },
-      })
-    end, { desc = "EasyMotion f style jump (buffer-wide)" })
+    -- Setup flash with global defaults for treesitter modes
+    flash.setup({
+      modes = {
+        treesitter = {
+          jump = { autojump = false },
+          highlight = { backdrop = true, matches = true },
+        },
+        treesitter_search = {
+          jump = { autojump = false },
+          highlight = { backdrop = true, matches = true },
+        },
+      },
+    })
 
-    vim.keymap.set("n", "<Leader><Leader>F", function()
-      flash.jump({
-        search = { mode = "char", backward = true, multi_line = true },
-        label = { before = false, after = true, uppercase = true },
-      })
-    end, { desc = "EasyMotion F style jump (buffer-wide)" })
+    -- Make flash labels more visible with bright colors
+    vim.cmd([[
+      highlight FlashLabel ctermfg=0 ctermbg=11 guifg=#000000 guibg=#ffff00
+    ]])
 
-    -- EasyMotion-style 't' and 'T' motions (jump *before* the target char)
-    vim.keymap.set("n", "<Leader><Leader>t", function()
-      flash.jump({
-        search = { mode = "char", multi_line = true },
-        label = { before = true, after = false, uppercase = true },
-      })
-    end, { desc = "EasyMotion t style jump (buffer-wide)" })
+    -- Helper function for label configuration
+    local function label_config(before)
+      return {
+        before = before,
+        after = not before,
+        distance = true, -- closer targets first in current window
+      }
+    end
 
-    vim.keymap.set("n", "<Leader><Leader>T", function()
-      flash.jump({
-        search = { mode = "char", backward = true, multi_line = true },
-        label = { before = true, after = false, uppercase = true },
-      })
-    end, { desc = "EasyMotion T style jump (buffer-wide)" })
+    -- ============================================================================
+    -- CHARACTER MOTIONS: f, F, t, T
+    -- Directional only, no wrap-around (matches easymotion behavior)
+    -- ============================================================================
 
-    -- EasyMotion-style word motions
-    vim.keymap.set("n", "<Leader><Leader>w", function()
+    -- f: Find character forward (inclusive, no wrap)
+    vim.keymap.set({ "n", "x", "o" }, "<leader><leader>f", function()
       flash.jump({
-        search = { mode = "word", multi_line = true },
-        label = { before = false, after = true, uppercase = true },
+        search = { mode = "search", forward = true, wrap = false },
+        jump = { pos = "end", inclusive = true, autojump = false },
+        label = label_config(false),
       })
-    end, { desc = "EasyMotion w style jump (buffer-wide)" })
+    end, { desc = "Flash find forward" })
 
-    vim.keymap.set("n", "<Leader><Leader>e", function()
+    -- F: Find character backward (inclusive, no wrap)
+    vim.keymap.set({ "n", "x", "o" }, "<leader><leader>F", function()
       flash.jump({
-        search = { mode = "end", multi_line = true },
-        label = { before = false, after = true, uppercase = true },
+        search = { mode = "search", forward = false, wrap = false },
+        jump = { pos = "end", inclusive = true, autojump = false },
+        label = label_config(false),
       })
-    end, { desc = "EasyMotion e style jump (buffer-wide)" })
+    end, { desc = "Flash find backward" })
+
+    -- t: Till character forward (exclusive, cursor before match, no wrap)
+    vim.keymap.set({ "n", "x", "o" }, "<leader><leader>t", function()
+      flash.jump({
+        search = { mode = "search", forward = true, wrap = false },
+        jump = { pos = "start", inclusive = false, autojump = false },
+        label = label_config(false),
+      })
+    end, { desc = "Flash till forward" })
+
+    -- T: Till character backward (exclusive, cursor before match, no wrap)
+    vim.keymap.set({ "n", "x", "o" }, "<leader><leader>T", function()
+      flash.jump({
+        search = { mode = "search", forward = false, wrap = false },
+        jump = { pos = "start", inclusive = false, autojump = false },
+        label = label_config(false),
+      })
+    end, { desc = "Flash till backward" })
+
+    -- ============================================================================
+    -- WORD MOTIONS: w, W (start of word)
+    -- Directional only, no wrap-around (matches easymotion behavior)
+    -- ============================================================================
+
+    -- w: Jump to start of next word (inclusive, no wrap)
+    vim.keymap.set({ "n", "x", "o" }, "<leader><leader>w", function()
+      flash.jump({
+        search = { mode = "search", forward = true, wrap = false },
+        pattern = [[\<]],
+        jump = { pos = "end", inclusive = true, autojump = false },
+        label = label_config(true),
+      })
+    end, { desc = "Flash word start forward" })
+
+    -- W: Jump to start of previous word (inclusive, no wrap)
+    vim.keymap.set({ "n", "x", "o" }, "<leader><leader>W", function()
+      flash.jump({
+        search = { mode = "search", forward = false, wrap = false },
+        pattern = [[\<]],
+        jump = { pos = "end", inclusive = true, autojump = false },
+        label = label_config(true),
+      })
+    end, { desc = "Flash word start backward" })
+
+    -- ============================================================================
+    -- END-OF-WORD MOTIONS: e, E
+    -- Directional only, no wrap-around (matches easymotion behavior)
+    -- ============================================================================
+
+    -- e: Jump to end of next word (inclusive, no wrap)
+    vim.keymap.set({ "n", "x", "o" }, "<leader><leader>e", function()
+      flash.jump({
+        search = { mode = "search", forward = true, wrap = false },
+        pattern = [[\>]],
+        jump = { pos = "end", inclusive = true, autojump = false },
+        label = label_config(true),
+      })
+    end, { desc = "Flash word end forward" })
+
+    -- E: Jump to end of previous word (inclusive, no wrap)
+    vim.keymap.set({ "n", "x", "o" }, "<leader><leader>E", function()
+      flash.jump({
+        search = { mode = "search", forward = false, wrap = false },
+        pattern = [[\>]],
+        jump = { pos = "end", inclusive = true, autojump = false },
+        label = label_config(true),
+      })
+    end, { desc = "Flash word end backward" })
+
+    -- ============================================================================
+    -- ADDITIONAL USEFUL MOTIONS
+    -- ============================================================================
+
+     -- S: Treesitter navigation (structural selection)
+     vim.keymap.set({ "n", "x", "o" }, "<leader><leader>s", function()
+       require("flash").treesitter()
+     end, { desc = "Flash treesitter" })
+
+     -- R: Treesitter search (search with structural context)
+     vim.keymap.set({ "n", "x", "o" }, "<leader><leader>r", function()
+       require("flash").treesitter_search()
+     end, { desc = "Flash treesitter search" })
+
+    -- Toggle flash in search mode with Ctrl+S (useful for / and ? searches)
+    vim.keymap.set("c", "<C-s>", function()
+      flash.toggle()
+    end, { desc = "Toggle flash search" })
   end,
 }
-
