@@ -50,6 +50,9 @@ vim.api.nvim_create_autocmd("CursorHold", {
 })
 
 vim.lsp.config("ruff", {
+	cmd = { "ruff", "server" },
+	filetypes = { "python" },
+	root_markers = { "pyproject.toml", "setup.py", "setup.cfg", "requirements.txt", ".git" },
 	settings = {
 		organizeImports = true,
 		format = {
@@ -61,6 +64,9 @@ vim.lsp.config("ruff", {
 
 
 vim.lsp.config("basedpyright", {
+	cmd = { "basedpyright-langserver", "--stdio" },
+	filetypes = { "python" },
+	root_markers = { "pyproject.toml", "setup.py", "setup.cfg", "requirements.txt", ".git" },
 	settings = {
 		basedpyright = {
 			analysis = {
@@ -76,6 +82,9 @@ vim.lsp.config("basedpyright", {
 })
 
 vim.lsp.config("rust-analyzer", {
+	cmd = { "rust-analyzer" },
+	filetypes = { "rust" },
+	root_markers = { "Cargo.toml", "Cargo.lock", "rust-project.json" },
 	settings = {
 		["rust-analyzer"] = {
 			inlayHints = {
@@ -109,6 +118,8 @@ vim.lsp.config("rust-analyzer", {
 })
 
 vim.lsp.config("lua_ls", {
+	cmd = { "lua-language-server" },
+	filetypes = { "lua" },
 	root_markers = { "luarc.json", "luarc.jsonc", "emmyrc.json", ".luacheckrc", "stylua.toml", ".stylua.toml", "selene.toml", "selene.yaml" },
 	settings = {
 		Lua = {
