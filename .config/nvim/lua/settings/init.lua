@@ -1,5 +1,6 @@
 require("settings.mappings")
 require("settings.set")
+require("settings.python")
 require("settings.lazy")
 require("settings.lsp")
 
