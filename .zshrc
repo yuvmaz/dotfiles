@@ -146,3 +146,8 @@ zle -N fzf-history-widget
 bindkey '^R' fzf-history-widget
 
 export PATH="$HOME/bin:$HOME/bin/$(hostname):$HOME/.cargo/bin;$HOME/bin/$(uname -m):$PATH"
+
+. "$HOME/.local/bin/env"
+
+# opencode
+export PATH=/home/yuvalm/.opencode/bin:$PATH
