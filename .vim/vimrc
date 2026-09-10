@@ -37,7 +37,6 @@ call plug#end()
 set norelativenumber
 
 
-set encoding=utf-8
 set fileencoding=utf-8
 inoremap kj <ESC>
 nnoremap <Leader>n :NERDTreeToggle<CR>
@@ -223,9 +222,6 @@ let $FZF_DEFAULT_OPTS = '--bind tab:down,shift-tab:up'
 autocmd CursorMovedI * if pumvisible() == 0|pclose|endif
 autocmd InsertLeave  * if pumvisible() == 0|pclose|endif
 
-let g:SuperTabDefaultCompletionType = "<c-x><c-o>"
-
-
 set shiftwidth=4
 set mouse=a
 
@@ -241,16 +237,11 @@ highlight CocMenuSel ctermfg=white ctermbg=19
 
 
 let g:UltiSnipsExpandTrigger="<c-j>"
-let g:UltiSnipsJumpForwardTrigger="<tab>"
-let g:UltiSnipsJumpBackwardTrigger="<s-tab>"
+let g:UltiSnipsJumpForwardTrigger="<c-j>"
+let g:UltiSnipsJumpBackwardTrigger="<c-k>"
 
 " If you want :UltiSnipsEdit to split your window.
 let g:UltiSnipsEditSplit="vertical"
-
-
-let g:jedi#completions_enabled = 1
-inoremap <expr> <Tab> pumvisible() ? "\<C-n>" : "\<Tab>"
-inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
 
 
 set rtp+=/opt/homebrew/opt/fzf
