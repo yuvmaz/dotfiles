@@ -6,13 +6,13 @@ ZSH_THEME="robbyrussell"
 
 plugins=(
     git
-    zsh-syntax-highlighting
-    zsh-autosuggestions
     z
     azure
-    fzf-tab
     kubectl
     helm
+    fzf-tab
+    zsh-autosuggestions
+    zsh-syntax-highlighting
 )
 
 source $ZSH/oh-my-zsh.sh
@@ -34,12 +34,17 @@ eval "$(pyenv init - zsh)"
 export POETRY_PYTHON="$(pyenv which python 2>/dev/null || echo python)"
 
 # -------------------------------
-# Completion system
+# PATH (typeset -U deduplicates)
 # -------------------------------
-fpath=(~/.zsh/completions $fpath)
-autoload -Uz compinit
-compinit
+typeset -U path PATH
+path=("${(@)path:#*;*}")
+export PATH="$HOME/bin:$HOME/bin/$(hostname):$HOME/bin/$(uname -m):$HOME/.cargo/bin:$PATH"
+[[ -f "$HOME/.local/bin/env" ]] && . "$HOME/.local/bin/env"
+export PATH="$HOME/.opencode/bin:$PATH"
 
+# -------------------------------
+# Completion tuning (compinit is run by oh-my-zsh)
+# -------------------------------
 unsetopt menu_complete
 unsetopt complete_in_word
 
@@ -57,7 +62,6 @@ zstyle ':completion:*' expand-prefix true
 zstyle ':completion:*' special-chars ''
 zstyle ':completion:*' menu no
 
-# fzf-tab settings
 zstyle ':fzf-tab:*' switch-group '<' '>'
 zstyle ':fzf-tab:*' continuous-trigger 'tab'
 zstyle ':fzf-tab:*' accept-line tab
@@ -67,14 +71,12 @@ zstyle ':fzf-tab:*' accept-line tab
 # -------------------------------
 export LANG=en_US.UTF-8
 export EDITOR=vim
-alias k=kubectl
 alias cat=bat
 alias ls=eza
 alias ll="eza -lh --time-style=long-iso -smodified -r"
 alias vi=vim
-alias pcat="cat --plain --pager=" 
+alias pcat="bat --plain --pager="
 
-source <(kubectl completion zsh)
 compdef k=kubectl
 
 # -------------------------------
@@ -113,8 +115,8 @@ PROMPT='%F{cyan}${PWD}%f $(git_prompt_info) %# '
 bindkey -v
 bindkey -M viins 'kj' vi-cmd-mode
 bindkey -M visual 'kj' vi-cmd-mode
-bindkey -M viins '^[v' edit-command-line
-bindkey -M vicmd '^[v' edit-command-line
+bindkey -M viins $'\ev' edit-command-line
+bindkey -M vicmd $'\ev' edit-command-line
 
 # ================================
 # Optimized fzf-history-widget for Zsh
@@ -145,9 +147,5 @@ fzf-history-widget() {
 zle -N fzf-history-widget
 bindkey '^R' fzf-history-widget
 
-export PATH="$HOME/bin:$HOME/bin/$(hostname):$HOME/.cargo/bin;$HOME/bin/$(uname -m):$PATH"
-
-. "$HOME/.local/bin/env"
-
-# opencode
-export PATH=/home/yuvalm/.opencode/bin:$PATH
+# Apply the cached pywal palette to new terminals.
+[[ -f "$HOME/.cache/wal/sequences" ]] && (command cat "$HOME/.cache/wal/sequences" &)

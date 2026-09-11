@@ -225,9 +225,9 @@ autocmd InsertLeave  * if pumvisible() == 0|pclose|endif
 set shiftwidth=4
 set mouse=a
 
-colorscheme zaibatsu
+colorscheme wal
 "highlight CocFloating ctermfg=black ctermbg=gray
-highlight CocFloating ctermbg=black
+highlight CocFloating ctermbg=0
 "highlight CocErrorHighlight term=underline cterm=underline ctermfg=203
 "highlight CocErrorSign ctermfg=red
 "highlight CocUnderline term=underline cterm=underline
