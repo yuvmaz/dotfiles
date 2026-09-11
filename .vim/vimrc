@@ -205,7 +205,7 @@ autocmd Filetype python setlocal foldmethod=indent
 
 autocmd FileType python  command! -buffer -nargs=* PyRun    execute "!python % <args>"
 autocmd FileType python  command! -buffer -nargs=* PyDebug  execute "!python -m pdb % <args>"
-autocmd FileType python  command! -buffer -nargs=* PyTest   execute "!python -m pytest <args>"
+autocmd FileType python  command! -buffer -nargs=* PyTest   execute "!python -m pytest % <args>"
 
 let g:jedi#usages_command = ";u" 
 
