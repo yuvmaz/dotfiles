@@ -34,6 +34,12 @@ eval "$(pyenv init - zsh)"
 export POETRY_PYTHON="$(pyenv which python 2>/dev/null || echo python)"
 
 # -------------------------------
+# mise setup (net-new tools only: fd, prettier, lua-language-server)
+# pyenv/brew/cargo keep owning python/node/rust
+# -------------------------------
+eval "$(mise activate zsh)"
+
+# -------------------------------
 # PATH (typeset -U deduplicates)
 # -------------------------------
 typeset -U path PATH
