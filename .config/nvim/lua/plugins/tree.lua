@@ -1,7 +1,7 @@
 -- NERDTree -> nvim-tree, same ";n" toggle (vimrc:42)
 return {
   "nvim-tree/nvim-tree.lua",
-  version = "*",
+  version = false,
   lazy = false,
   dependencies = { "nvim-tree/nvim-web-devicons" },
   config = function()

@@ -155,3 +155,6 @@ bindkey '^R' fzf-history-widget
 
 # Apply the cached pywal palette to new terminals.
 [[ -f "$HOME/.cache/wal/sequences" ]] && (command cat "$HOME/.cache/wal/sequences" &)
+
+# Allow terminal nvim <C-s> (treesel): disable XON/XOFF flow control on interactive TTYs
+[[ -t 0 ]] && stty -ixon 2>/dev/null || true

@@ -1,8 +1,8 @@
 -- Mason owns LSP servers only (mise owns fd/prettier/lua-language-server binaries)
 return {
-  "williamboman/mason.nvim",
-  lazy = false,
-  dependencies = { "williamboman/mason-lspconfig.nvim" },
+    "mason-org/mason.nvim",
+    lazy = false,
+    dependencies = { "mason-org/mason-lspconfig.nvim" },
   config = function()
     require("mason").setup()
     require("mason-lspconfig").setup({

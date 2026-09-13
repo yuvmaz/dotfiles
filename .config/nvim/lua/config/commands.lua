@@ -1,7 +1,7 @@
 -- Port of vimrc :Format/:Fold/:OR (vimrc:166-172) and :PyRun/:PyDebug/:PyTest (vimrc:206-208)
 vim.api.nvim_create_user_command("Format", function()
-  vim.lsp.buf.format({ async = true })
-end, { desc = "Format buffer with LSP" })
+  require("conform").format({ async = true, lsp_fallback = true })
+end, { desc = "Format buffer (conform, LSP fallback)" })
 
 -- Port of vimrc :Fold (CocAction fold). Native LSP has no fold action, so
 -- ensure expr folding backed by the LSP foldexpr, then close all folds.
@@ -71,7 +71,8 @@ vim.api.nvim_create_autocmd("FileType", {
       vim.b.pyrun_closable = true
     end, { nargs = "*", desc = "Debug current python file" })
     vim.api.nvim_buf_create_user_command(0, "PyTest", function(cmd)
-      vim.cmd("!python -m pytest " .. table.concat(cmd.fargs, " "))
+      vim.cmd("terminal python -m pytest " .. table.concat(cmd.fargs, " "))
+      vim.b.pyrun_closable = true
     end, { nargs = "*", desc = "Run pytest" })
   end,
 })

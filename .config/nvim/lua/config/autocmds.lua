@@ -1,4 +1,4 @@
--- Port of vimrc autocmds (python/go ft, highlight). pumvisible cleanup deleted (N/A).
+-- Port of vimrc autocmds (python/go ft, yank highlight).
 local group = vim.api.nvim_create_augroup("VimrcPort", { clear = true })
 
 vim.api.nvim_create_autocmd("TextYankPost", {
@@ -8,7 +8,7 @@ vim.api.nvim_create_autocmd("TextYankPost", {
   end,
 })
 
--- vimrc: python expandtab 4-space + indent fold (omnifunc not needed, LSP provides it)
+-- vimrc: python expandtab 4-space + indent fold
 vim.api.nvim_create_autocmd("FileType", {
   group = group,
   pattern = "python",
@@ -21,11 +21,12 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 
--- vimrc: go 4-space tabs
+-- vimrc: go real tabs (gofmt standard; global expandtab must be overridden)
 vim.api.nvim_create_autocmd("FileType", {
   group = group,
   pattern = "go",
   callback = function()
+    vim.opt_local.expandtab = false
     vim.opt_local.tabstop = 4
     vim.opt_local.shiftwidth = 4
     vim.opt_local.softtabstop = 4

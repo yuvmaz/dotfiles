@@ -24,10 +24,25 @@ return {
       require("Comment.api").uncomment.linewise.current()
     end, { desc = "Uncomment line" })
     map("v", ";cu", "<ESC><cmd>lua require('Comment.api').uncomment.linewise(vim.fn.visualmode())<CR>", { desc = "Uncomment selection" })
-    -- NERDCommenter parity: ;c$ to-EOL and ;cA append (normal-only, like NERD)
+    -- NERDCommenter parity: ;c$ comments out cursor->EOL (Comment.nvim forces
+    -- block delimiters on single-line partial ranges, so insert the line
+    -- marker from commentstring manually), ;cA appends marker at EOL.
     map("n", ";c$", function()
-      require("Comment.api").insert.linewise.eol()
-    end, { desc = "Comment to end of line" })
+      local cs = vim.bo.commentstring
+      if cs == "" then
+        return
+      end
+      local marker = vim.split(cs, "%s", { plain = true })[1]:gsub("%s+$", "")
+      local col = vim.fn.col(".")
+      local line = vim.fn.getline(".")
+      local before, rest = line:sub(1, col - 1), line:sub(col)
+      if rest:match("^" .. vim.pesc(marker) .. "%s") then
+        rest = rest:gsub("^" .. vim.pesc(marker) .. "%s", "", 1)
+      else
+        rest = marker .. " " .. rest
+      end
+      vim.fn.setline(".", before .. rest)
+    end, { desc = "Comment from cursor to EOL" })
     map("n", ";cA", function()
       require("Comment.api").insert.linewise.eol()
     end, { desc = "Append comment at EOL" })
