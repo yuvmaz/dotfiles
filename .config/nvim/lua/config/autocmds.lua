@@ -1,15 +1,14 @@
--- Port of vimrc autocmds (python/go ft, yank highlight).
-local group = vim.api.nvim_create_augroup("VimrcPort", { clear = true })
+local api = vim.api
+local group = api.nvim_create_augroup("CoreConfig", { clear = true })
 
-vim.api.nvim_create_autocmd("TextYankPost", {
+api.nvim_create_autocmd("TextYankPost", {
   group = group,
   callback = function()
     vim.highlight.on_yank({ timeout = 200 })
   end,
 })
 
--- vimrc: python expandtab 4-space + indent fold
-vim.api.nvim_create_autocmd("FileType", {
+api.nvim_create_autocmd("FileType", {
   group = group,
   pattern = "python",
   callback = function()
@@ -21,8 +20,7 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 
--- vimrc: go real tabs (gofmt standard; global expandtab must be overridden)
-vim.api.nvim_create_autocmd("FileType", {
+api.nvim_create_autocmd("FileType", {
   group = group,
   pattern = "go",
   callback = function()

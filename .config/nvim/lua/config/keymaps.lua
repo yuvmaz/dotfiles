@@ -1,11 +1,3 @@
--- Core keymaps ported from vimrc:41-49. Leader ";" is set in init.lua.
--- Where keymaps live (everything not here):
---   fzf          lua/plugins/fzf.lua
---   comments     lua/plugins/comment.lua
---   LSP          lua/config/lsp.lua  (buffer-local, on LspAttach)
---   tree         lua/plugins/tree.lua
---   flash        lua/plugins/motion.lua
---   textobjects  lua/plugins/textobjects.lua
 local map = vim.keymap.set
 
 map({ "i", "v" }, "kj", "<ESC>", { silent = true, desc = "Exit to normal" })

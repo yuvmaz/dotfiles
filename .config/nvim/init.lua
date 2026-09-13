@@ -1,4 +1,4 @@
--- leader must be set before lazy/plugins load (kept ";" from vimrc)
+-- Leaders must be defined before plugins are loaded.
 vim.g.mapleader = ";"
 vim.g.maplocalleader = ";"
 

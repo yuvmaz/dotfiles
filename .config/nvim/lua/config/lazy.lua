@@ -1,4 +1,3 @@
--- Bootstrap folke/lazy.nvim and load every spec in lua/plugins/*.lua
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.uv.fs_stat(lazypath) then
   vim.fn.system({
@@ -18,7 +17,16 @@ require("lazy").setup({
   checker = { enabled = false },
   performance = {
     rtp = {
-      disabled_plugins = { "gzip", "matchit", "matchparen", "netrwPlugin", "tarPlugin", "tohtml", "tutor", "zipPlugin" },
+      disabled_plugins = {
+        "gzip",
+        "matchit",
+        "matchparen",
+        "netrwPlugin",
+        "tarPlugin",
+        "tohtml",
+        "tutor",
+        "zipPlugin",
+      },
     },
   },
 })

@@ -34,6 +34,10 @@ return {
       { "ia", "@assignment.inner", "Inner assignment (value)" },
       { "av", "@assignment.lhs",   "Variable name" },
       { "iv", "@assignment.lhs",   "Variable name" },
+      { "aP", "@parameter.outer",  "Outer parameter" },
+      { "iP", "@parameter.inner",  "Inner parameter" },
+      { "aC", "@call.outer",       "Outer function call" },
+      { "iC", "@call.inner",       "Inner function call" },
     }
     for _, k in ipairs(select_keys) do
       vim.keymap.set({ "x", "o" }, k[1], function()
@@ -58,6 +62,12 @@ return {
       -- Assignment jumps (mirrors ]m/]k style).
       { "]a", move.goto_next_start,      "@assignment.outer", "Next assignment start" },
       { "[a", move.goto_previous_start,  "@assignment.outer", "Previous assignment start" },
+      -- Parameter jumps (function args, call args, tuple/list elements).
+      { "]p", move.goto_next_start,      "@parameter.outer",  "Next parameter start" },
+      { "[p", move.goto_previous_start,  "@parameter.outer",  "Previous parameter start" },
+      -- Call jumps (function calls).
+      { "]x", move.goto_next_start,      "@call.outer",       "Next call start" },
+      { "[x", move.goto_previous_start,  "@call.outer",       "Previous call start" },
     }
     for _, k in ipairs(move_keys) do
       vim.keymap.set({ "n", "x", "o" }, k[1], function()

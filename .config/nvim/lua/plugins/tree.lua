@@ -1,4 +1,3 @@
--- NERDTree -> nvim-tree, same ";n" toggle (vimrc:42)
 return {
   "nvim-tree/nvim-tree.lua",
   version = false,
@@ -11,7 +10,6 @@ return {
       local function opts(desc)
         return { desc = "nvim-tree: " .. desc, buffer = bufnr, noremap = true, silent = true, nowait = true }
       end
-      -- vim-style directory navigation (missing from nvim-tree defaults)
       vim.keymap.set("n", "l", api.node.open.edit, opts("Open"))
       vim.keymap.set("n", "h", api.node.navigate.parent_close, opts("Close Directory"))
     end
@@ -25,6 +23,10 @@ return {
       renderer = { icons = { show = { git = true, folder = true, file = true, folder_arrow = true } } },
       actions = { open_file = { quit_on_open = false } },
     })
-    vim.keymap.set("n", ";n", "<cmd>NvimTreeToggle<CR>", { noremap = true, silent = true, desc = "Toggle file tree" })
+    vim.keymap.set("n", "<leader>n", "<cmd>NvimTreeToggle<CR>", {
+      noremap = true,
+      silent = true,
+      desc = "Toggle file tree",
+    })
   end,
 }

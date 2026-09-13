@@ -1,16 +1,10 @@
--- Single source of truth for languages.
--- To add a future language: add 1 entry to lsp_servers/parsers/formatters.
--- Server vim.lsp.config blocks live in config/lsp-servers.lua.
 local M = {}
 
--- LSP servers configured via vim.lsp.config + enabled (rust via rustaceanvim, not here)
+-- Rust is enabled separately by rustaceanvim.
 M.lsp_servers = { "html", "jsonls", "yamlls", "basedpyright", "ruff", "lua_ls", "gopls" }
 
--- mason-lspconfig ensure_installed uses lspconfig server names (not mason
--- package names), and mise owns fd/prettier/lua-language-server/stylua
--- binaries, so mason installs only the LSP servers with no ownership
--- duplication. gopls installs via the go toolchain.
-M.mason_ensure = { "html", "jsonls", "yamlls", "basedpyright", "ruff", "gopls" }
+-- gopls comes from the Go toolchain; lua_ls comes from mise.
+M.mason_ensure = { "html", "jsonls", "yamlls", "basedpyright", "ruff" }
 
 -- Tree-sitter parsers
 M.parsers = {

@@ -1,78 +1,81 @@
--- Port of vimrc :Format/:Fold/:OR (vimrc:166-172) and :PyRun/:PyDebug/:PyTest (vimrc:206-208)
-vim.api.nvim_create_user_command("Format", function()
-  require("conform").format({ async = true, lsp_fallback = true })
+local api = vim.api
+
+local function shell_command(args)
+  return table.concat(vim.tbl_map(vim.fn.shellescape, args), " ")
+end
+
+local function open_terminal(args)
+  vim.cmd.terminal(shell_command(args))
+  vim.b.pyrun_closable = true
+end
+
+api.nvim_create_user_command("Format", function()
+  require("conform").format({ async = true, lsp_format = "fallback" })
 end, { desc = "Format buffer (conform, LSP fallback)" })
 
--- Port of vimrc :Fold (CocAction fold). Native LSP has no fold action, so
--- ensure expr folding backed by the LSP foldexpr, then close all folds.
--- Optional numeric arg sets foldlevel first (e.g. :Fold 1).
-vim.api.nvim_create_user_command("Fold", function(cmd)
+api.nvim_create_user_command("Fold", function(cmd)
   if vim.wo.foldmethod == "manual" then
     vim.wo.foldmethod = "expr"
     vim.wo.foldexpr = "v:lua.vim.lsp.foldexpr()"
   end
+
+  vim.cmd("normal! zM")
   local level = tonumber(cmd.args or "")
   if level then
     vim.wo.foldlevel = level
   end
-  vim.cmd("normal! zM")
 end, { nargs = "?", desc = "Fold buffer (close all folds)" })
 
-vim.api.nvim_create_user_command("OR", function()
+api.nvim_create_user_command("OR", function()
   vim.lsp.buf.code_action({ context = { only = { "source.organizeImports" } }, apply = true })
 end, { desc = "Organize imports" })
 
-local py = vim.api.nvim_create_augroup("PyCommands", { clear = true })
+local py_commands = api.nvim_create_augroup("PyCommands", { clear = true })
+local terminal_close = api.nvim_create_augroup("PyRunTermClose", { clear = true })
 
--- Press-ENTER-to-close for PyRun/PyDebug terminals (Option 2).
--- The <CR> closer is only installed when the job exits (TermClose), so Enter
--- mid-run still goes to the program (input()/pdb) untouched.
-local term_close = vim.api.nvim_create_augroup("PyRunTermClose", { clear = true })
-vim.api.nvim_create_autocmd("TermClose", {
-  group = term_close,
+api.nvim_create_autocmd("TermClose", {
+  group = terminal_close,
   callback = function(args)
-    if not vim.api.nvim_buf_is_valid(args.buf) then
+    if not api.nvim_buf_is_valid(args.buf) or not vim.b[args.buf].pyrun_closable then
       return
     end
-    if not vim.b[args.buf].pyrun_closable then
-      return
-    end
+
     vim.b[args.buf].pyrun_closable = false
     local code = vim.v.event.status
     vim.schedule(function()
-      if not vim.api.nvim_buf_is_valid(args.buf) then
+      if not api.nvim_buf_is_valid(args.buf) then
         return
       end
+
       vim.keymap.set({ "n", "t" }, "<CR>", "<cmd>bd!<CR>", {
         buffer = args.buf,
         silent = true,
         desc = "Close finished run",
       })
-      vim.api.nvim_echo(
-        { { string.format("[Exited %d — Press ENTER to close]", code), "MoreMsg" } },
-        false,
-        {}
-      )
+      api.nvim_echo({ { string.format("[Exited %d -- Press ENTER to close]", code), "MoreMsg" } }, false, {})
     end)
   end,
 })
-vim.api.nvim_create_autocmd("FileType", {
-  group = py,
+
+api.nvim_create_autocmd("FileType", {
+  group = py_commands,
   pattern = "python",
   callback = function()
-    vim.api.nvim_buf_create_user_command(0, "PyRun", function(cmd)
-      local file = vim.fn.expand("%")
-      vim.cmd("terminal python " .. vim.fn.shellescape(file) .. " " .. table.concat(cmd.fargs, " "))
-      vim.b.pyrun_closable = true -- current buffer is the new terminal
+    api.nvim_buf_create_user_command(0, "PyRun", function(cmd)
+      open_terminal(vim.list_extend({ "python", vim.fn.expand("%:p") }, cmd.fargs))
     end, { nargs = "*", desc = "Run current python file" })
-    vim.api.nvim_buf_create_user_command(0, "PyDebug", function(cmd)
-      local file = vim.fn.expand("%")
-      vim.cmd("terminal python -m pdb " .. vim.fn.shellescape(file) .. " " .. table.concat(cmd.fargs, " "))
-      vim.b.pyrun_closable = true
+
+    api.nvim_buf_create_user_command(0, "PyDebug", function(cmd)
+      open_terminal(vim.list_extend({ "python", "-m", "pdb", vim.fn.expand("%:p") }, cmd.fargs))
     end, { nargs = "*", desc = "Debug current python file" })
-    vim.api.nvim_buf_create_user_command(0, "PyTest", function(cmd)
-      vim.cmd("terminal python -m pytest " .. table.concat(cmd.fargs, " "))
-      vim.b.pyrun_closable = true
+
+    api.nvim_buf_create_user_command(0, "PyTest", function(cmd)
+      open_terminal(vim.list_extend({ "python", "-m", "pytest" }, cmd.fargs))
     end, { nargs = "*", desc = "Run pytest" })
+
+    api.nvim_buf_create_user_command(0, "Pydoc", function(cmd)
+      local word = cmd.args ~= "" and cmd.args or vim.fn.expand("<cword>")
+      vim.cmd("!" .. shell_command({ "python3", "-c", "import pydoc, sys; pydoc.help(sys.argv[1])", word }))
+    end, { nargs = "?", desc = "Show Python docs for word under cursor" })
   end,
 })
