@@ -82,6 +82,8 @@ alias ls=eza
 alias ll="eza -lh --time-style=long-iso -smodified -r"
 alias vi=vim
 alias pcat="bat --plain --pager="
+alias vim="nvim"
+alias vi="nvim"
 
 compdef k=kubectl
 
