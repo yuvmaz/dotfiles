@@ -121,3 +121,4 @@ export PATH="$HOME/bin:$HOME/bin/$(hostname):$HOME/bin/$(uname -m):$PATH"
 . "$HOME/.cargo/env"
 
 . "$HOME/.local/bin/env"
+eval "$($HOME/.local/bin/mise activate bash)"
