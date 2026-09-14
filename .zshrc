@@ -160,3 +160,10 @@ bindkey '^R' fzf-history-widget
 
 # Allow terminal nvim <C-s> (treesel): disable XON/XOFF flow control on interactive TTYs
 [[ -t 0 ]] && stty -ixon 2>/dev/null || true
+
+# bun completions
+[ -s "/home/yuvalm/.bun/_bun" ] && source "/home/yuvalm/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
