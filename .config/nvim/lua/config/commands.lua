@@ -4,7 +4,13 @@ local function shell_command(args)
   return table.concat(vim.tbl_map(vim.fn.shellescape, args), " ")
 end
 
-local function open_terminal(args)
+local function open_terminal(args, opts)
+  opts = opts or {}
+  if opts.layout == "tab" then
+    vim.cmd("tabnew")
+  else
+    vim.cmd("botright 12split")
+  end
   vim.cmd.terminal(shell_command(args))
   vim.b.pyrun_closable = true
 end
@@ -62,11 +68,11 @@ api.nvim_create_autocmd("FileType", {
   pattern = "python",
   callback = function()
     api.nvim_buf_create_user_command(0, "PyRun", function(cmd)
-      open_terminal(vim.list_extend({ "python", vim.fn.expand("%:p") }, cmd.fargs))
+      open_terminal(vim.list_extend({ "python", vim.fn.expand("%:p") }, cmd.fargs), { layout = "tab" })
     end, { nargs = "*", desc = "Run current python file" })
 
     api.nvim_buf_create_user_command(0, "PyDebug", function(cmd)
-      open_terminal(vim.list_extend({ "python", "-m", "pdb", vim.fn.expand("%:p") }, cmd.fargs))
+      open_terminal(vim.list_extend({ "python", "-m", "pdb", vim.fn.expand("%:p") }, cmd.fargs), { layout = "tab" })
     end, { nargs = "*", desc = "Debug current python file" })
 
     api.nvim_buf_create_user_command(0, "PyTest", function(cmd)
