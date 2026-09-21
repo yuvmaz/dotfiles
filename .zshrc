@@ -77,7 +77,7 @@ zstyle ':fzf-tab:*' accept-line tab
 # Environment variables & aliases
 # -------------------------------
 export LANG=en_US.UTF-8
-export EDITOR=vim
+export EDITOR=nvim
 alias cat=bat
 alias ls=eza
 alias ll="eza -lh --time-style=long-iso -smodified -r"
@@ -113,10 +113,10 @@ git_prompt_info() {
         [[ $behind -gt 0 ]] && extra+="↓$behind"
     fi
 
-    echo "${color}(${branch}${extra})%f"
+    echo "${color} ${branch}${extra}%f"
 }
 
-PROMPT='%F{cyan}${PWD}%f $(git_prompt_info) %# '
+PROMPT='%F{cyan}${PWD}%f $(git_prompt_info) %F{magenta}%f '
 
 # -------------------------------
 # vi mode & keybindings
