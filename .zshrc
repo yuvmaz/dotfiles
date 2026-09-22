@@ -26,16 +26,7 @@ SAVEHIST=1000
 HISTFILE=~/.zsh_history
 
 # -------------------------------
-# pyenv setup
-# -------------------------------
-export PYENV_ROOT="$HOME/.pyenv"
-[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init - zsh)"
-export POETRY_PYTHON="$(pyenv which python 2>/dev/null || echo python)"
-
-# -------------------------------
 # mise setup (net-new tools only: fd, prettier, lua-language-server)
-# pyenv/brew/cargo keep owning python/node/rust
 # -------------------------------
 [[ -f "$HOME/.local/bin/env" ]] && . "$HOME/.local/bin/env"
 eval "$($HOME/.local/bin/mise activate zsh)"

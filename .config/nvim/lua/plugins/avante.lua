@@ -6,6 +6,11 @@ return {
   dependencies = {
     "nvim-lua/plenary.nvim",
     "MunifTanjim/nui.nvim",
+    {
+      "MeanderingProgrammer/render-markdown.nvim",
+      opts = { file_types = { "markdown", "Avante" } },
+      ft = { "markdown", "Avante" },
+    },
     "nvim-tree/nvim-web-devicons",
   },
   opts = {
@@ -43,12 +48,6 @@ return {
       select_history = "<leader>xh",
       select_acp_model = "<leader>xM",
       select_acp_mode = "<leader>xm",
-    },
-    acp_providers = {
-      opencode = {
-        command = "opencode",
-        args = { "acp" },
-      },
     },
   },
 }
