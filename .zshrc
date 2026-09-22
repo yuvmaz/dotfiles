@@ -1,4 +1,9 @@
 # -------------------------------
+# Custom completions (must be before oh-my-zsh / compinit)
+# Regenerate with: uv generate-shell-completion zsh > ~/.zfunc/_uv && cp ~/.zfunc/_uv ~/.zfunc/_uvx && mise completion zsh > ~/.zfunc/_mise && opencode completion zsh > ~/.zfunc/_opencode && rustup completions zsh > ~/.zfunc/_rustup && rustup completions zsh cargo > ~/.zfunc/_cargo
+# -------------------------------
+fpath=(~/.zfunc $fpath)
+
 # Oh My Zsh setup
 # -------------------------------
 export ZSH="$HOME/.oh-my-zsh"
