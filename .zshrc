@@ -31,16 +31,7 @@ SAVEHIST=1000
 HISTFILE=~/.zsh_history
 
 # -------------------------------
-# pyenv setup
-# -------------------------------
-export PYENV_ROOT="$HOME/.pyenv"
-[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init - zsh)"
-export POETRY_PYTHON="$(pyenv which python 2>/dev/null || echo python)"
-
-# -------------------------------
 # mise setup (net-new tools only: fd, prettier, lua-language-server)
-# pyenv/brew/cargo keep owning python/node/rust
 # -------------------------------
 [[ -f "$HOME/.local/bin/env" ]] && . "$HOME/.local/bin/env"
 eval "$($HOME/.local/bin/mise activate zsh)"
@@ -92,6 +83,27 @@ alias vim="nvim"
 alias vi="nvim"
 
 compdef k=kubectl
+
+# Cache generated completions so large scripts are not rebuilt on every shell startup.
+_load_completion() {
+    local name=$1
+    shift
+    local completion_file="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/completions/_${name}"
+
+    if [[ ! -s "$completion_file" ]] && command -v "$name" >/dev/null 2>&1; then
+        mkdir -p "${completion_file:h}"
+        "$@" >| "$completion_file" 2>/dev/null || rm -f "$completion_file"
+    fi
+
+    [[ -s "$completion_file" ]] && source "$completion_file"
+}
+
+_load_completion uv uv generate-shell-completion zsh
+_load_completion uvx uvx --generate-shell-completion zsh
+_load_completion ruff ruff generate-shell-completion zsh
+_load_completion gh gh completion --shell zsh
+_load_completion opencode opencode completion zsh
+unfunction _load_completion
 
 # -------------------------------
 # Prompt setup: full path + git status

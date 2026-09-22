@@ -7,8 +7,7 @@ if vim.fn.isdirectory(shims) == 1 then
   end
 end
 
--- This pyenv installation provides pynvim for UltiSnips.
-local pyenv_py = vim.fn.expand("~/.pyenv/versions/3.12.9/bin/python")
-if vim.fn.executable(pyenv_py) == 1 then
-  vim.g.python3_host_prog = pyenv_py
+local pynvim = vim.fn.expand("~/.local/share/nvim/pynvim-venv/bin/python")
+if vim.fn.executable(pynvim) == 1 then
+  vim.g.python3_host_prog = pynvim
 end

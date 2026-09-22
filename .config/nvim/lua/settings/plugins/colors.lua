@@ -1,0 +1,23 @@
+return {
+  { "folke/tokyonight.nvim", name = "tokyonight", config = function() vim.g.tokyonight_style = "storm" end },
+  { "armannikoyan/rusty", name = "rusty" },
+  { "catppuccin/nvim", name = "catppuccin", config = function() require("catppuccin").setup{} end },
+  { "rebelot/kanagawa.nvim", name = "kanagawa", config = function() require("kanagawa").setup{} end },
+  { "rose-pine/neovim", name = "rose-pine", config = function() require("rose-pine").setup{} end },
+  { "EdenEast/nightfox.nvim", name = "nightfox", config = function() require("nightfox").setup{} end },
+  { "ellisonleao/gruvbox.nvim", name = "gruvbox" },
+  { "sainnhe/sonokai", name = "sonokai" },
+  { "projekt0n/github-nvim-theme", name = "github" },
+  { "sainnhe/everforest", name = "everforest" },
+  { "navarasu/onedark.nvim", name = "onedark", config = function() require("onedark").setup{} end },
+  { "olimorris/onedarkpro.nvim", name = "onedarkpro", config = function() require("onedarkpro").setup{} end },
+  { "rmehri01/onenord.nvim", name = "onenord", config = function() require("onenord").setup{} end },
+  { "dracula/vim", name = "dracula" },
+  { "bluz71/vim-moonfly-colors", name = "moonfly" },
+  { "bluz71/vim-nightfly-colors", name = "nightfly" },
+  { "AlexvZyl/nordic.nvim", name = "nordic", config = function() require("nordic").setup{} end },
+  { "savq/melange-nvim", name = "melange" },
+  { "xero/miasma.nvim", name = "miasma" },
+  { "NTBBloodbath/doom-one.nvim", name = "doom-one" },
+}
+

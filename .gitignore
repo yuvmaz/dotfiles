@@ -2,3 +2,4 @@
 repos/ 
 .ssh/
 
+!.config/nvim
