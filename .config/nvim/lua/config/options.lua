@@ -17,6 +17,7 @@ opt.scrolloff = 8
 opt.colorcolumn = "80"
 
 opt.termguicolors = true
+opt.guifont = "JetBrainsMono Nerd Font Mono:h12"
 opt.hlsearch = false
 opt.incsearch = true
 
