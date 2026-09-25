@@ -8,6 +8,7 @@ fpath=(~/.zfunc $fpath)
 # -------------------------------
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="robbyrussell"
+fpath=("$HOME/.zsh/completions" $fpath)
 
 plugins=(
     git
@@ -34,16 +35,21 @@ HISTFILE=~/.zsh_history
 # mise setup (net-new tools only: fd, prettier, lua-language-server)
 # -------------------------------
 [[ -f "$HOME/.local/bin/env" ]] && . "$HOME/.local/bin/env"
-eval "$($HOME/.local/bin/mise activate zsh)"
+[[ -x "$HOME/.local/bin/mise" ]] && eval "$("$HOME/.local/bin/mise" activate zsh)"
 
 # -------------------------------
 # PATH (typeset -U deduplicates)
 # -------------------------------
 typeset -U path PATH
 path=("${(@)path:#*;*}")
-export PATH="$HOME/bin:$HOME/bin/$(hostname):$HOME/bin/$(uname -m):$HOME/.cargo/bin:$PATH"
-[[ -f "$HOME/.local/bin/env" ]] && . "$HOME/.local/bin/env"
-export PATH="$HOME/.opencode/bin:$PATH"
+path=(
+    "$HOME/.opencode/bin"
+    "$HOME/bin"
+    "$HOME/bin/$(hostname)"
+    "$HOME/bin/$(uname -m)"
+    "$HOME/.cargo/bin"
+    $path
+)
 
 # -------------------------------
 # Completion tuning (compinit is run by oh-my-zsh)
@@ -77,7 +83,6 @@ export EDITOR=nvim
 alias cat=bat
 alias ls=eza
 alias ll="eza -lh --time-style=long-iso -smodified -r"
-alias vi=vim
 alias pcat="bat --plain --pager="
 alias vim="nvim"
 alias vi="nvim"
@@ -179,9 +184,8 @@ bindkey '^R' fzf-history-widget
 # Allow terminal nvim <C-s> (treesel): disable XON/XOFF flow control on interactive TTYs
 [[ -t 0 ]] && stty -ixon 2>/dev/null || true
 
-# bun completions
-[ -s "/home/yuvalm/.bun/_bun" ] && source "/home/yuvalm/.bun/_bun"
-
 # bun
 export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
+path=("${(@)path:#$BUN_INSTALL/bin}")
+[[ -d "$BUN_INSTALL/bin" ]] && path=("$BUN_INSTALL/bin" $path)
+[[ -s "$BUN_INSTALL/_bun" ]] && source "$BUN_INSTALL/_bun"
