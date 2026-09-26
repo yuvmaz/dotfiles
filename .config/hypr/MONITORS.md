@@ -1,54 +1,55 @@
 # Monitor layout
 
-**Philips on the TOP. LG on the BOTTOM.** Moving the pointer **up** from the LG
-reaches the Philips.
+**Philips on top; LG on the bottom.** Move the pointer **up** from the LG to
+reach the Philips.
 
-| Position | Monitor           | Native mode       | Scale | EDID id            |
-|----------|-------------------|-------------------|-------|--------------------|
-| Top      | Philips PHL 243V5 | 1920x1080 @ 60 Hz | 1     | `PHL-49361-19827`  |
-| Bottom   | LG HDR WFHD       | 2560x1080 @ 60 Hz | 1     | `GSM-23456-348447` |
+| Position | Monitor | Native mode | Scale | Kernel EDID ID |
+| --- | --- | --- | --- | --- |
+| Top | Philips PHL 243V5 | 1920×1080 @ 60 Hz | 1× | `PHL-49361-19827` |
+| Bottom | LG HDR WFHD | 2560×1080 @ 59.978 Hz | 1× | `GSM-23456-348447` |
 
-The Philips is centred above the LG.
+The Philips is centred over the LG. Both screens use their native resolution.
 
-## How it works
+## How the layout is applied
 
-All of it is `apply_monitor_layout()` in `hyprland.lua`. It:
+`apply_monitor_layout()` in `hyprland.lua` is the single source of monitor
+configuration. It reads each connected output's EDID from `/sys/class/drm`,
+identifies the panel by manufacturer, product code and serial, takes the
+preferred timing from the first detailed timing descriptor, then assigns the
+Hyprland connector and lays out the panels vertically. The EDID identity belongs
+to the monitor, so it remains the same when cables or ports change.
 
-1. Reads each connected monitor's EDID from the kernel (`/sys/class/drm/*/edid`).
-   The id is manufacturer, product code and serial number. These are stored in
-   the monitor itself, so they don't change when you swap cables or ports.
-2. Takes each monitor's native mode from its EDID's first detailed timing.
-3. Places the top monitor at y=0 and the bottom monitor directly below it.
-4. Pins workspaces 4 and 9 to the top monitor.
-5. Retries every second (up to 10 times) if a monitor's EDID can't be read
-   yet, which can happen while it wakes up.
+The function runs:
 
-It runs:
+- when Hyprland starts and whenever its configuration reloads
+- when a monitor is added or removed
+- after sleep, through `hypridle.conf`'s `after_sleep_cmd`
+- on demand with `SUPER+SHIFT+M`
 
-- when Hyprland starts and on every config reload, as part of loading the config
-- on the `monitor.added` and `monitor.removed` events: hotplug, monitor power-on
-- after resume from sleep, through `after_sleep_cmd` in `hypridle.conf`
-- when you press `SUPER+SHIFT+M`
+If a connected monitor's EDID is temporarily unavailable during wake, the
+function retries once per second for up to 10 attempts. Workspaces 4 and 9 are
+pinned to the Philips. Waybar and hyprpaper are not pinned to connector names.
 
-Waybar and hyprpaper don't pin to specific monitors, so they never need to know
-which connector a monitor is on.
+Startup and suspend/resume have both been confirmed working. To inspect the
+kernel's current monitor identities and preferred modes:
 
-To change the layout, edit the `MONITORS` table at the top of that section.
+```sh
+for c in /sys/class/drm/card*-*/; do
+  [ "$(cat "$c/status")" = connected ] || continue
+  printf '\n%s\n' "$c"
+  di-edid-decode < "$c/edid" | grep -E 'Manufacturer:|Product Name|DTD 1:'
+done
+```
 
-## Do not
+To check the pointer's current virtual position, run `hyprctl cursorpos`. Hyprland
+may report stale or swapped make/model/serial labels in `hyprctl monitors`; use
+the kernel EDID and the pointer's position on the physical screens to verify the
+mapping instead.
 
-- **Identify monitors by connector name** (`DP-1`, `DP-2`). The name belongs to
-  the port, not the monitor, so it changes when cables are swapped.
-- **Trust Hyprland's own make, model, serial or description**
-  (`hyprctl monitors`). Hyprland has kept stale EDID data for a connector,
-  which swapped every label. It also drove the Philips at the LG's 2560x1080.
-  The kernel's EDID was correct throughout. Check it with:
+## When changing the layout
 
-  ```sh
-  for c in /sys/class/drm/card*-*/; do
-    [ "$(cat $c/status)" = connected ] && echo "$c" && di-edid-decode < $c/edid | grep -E 'Product Name|DTD 1'
-  done
-  ```
-
-- **Rely on labels or coordinates without checking by hand.** When in doubt,
-  put the pointer on a physical screen and run `hyprctl cursorpos`.
+Edit the `MONITORS` table in `hyprland.lua`. Keep monitor identities tied to the
+kernel EDID IDs above; do not replace them with `DP-1`/`DP-2`, which identify
+ports and can change when cables are moved. The layout function derives the
+native modes and positions from the EDIDs, so it should not need hard-coded
+connector names or resolution overrides.
