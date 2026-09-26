@@ -44,7 +44,6 @@ hl.on("hyprland.start", function()
         "hyprpaper",
         "hypridle",
         "GTK_USE_PORTAL=0 waybar",
-        scripts .. "/setup-monitors",
         "easyeffects",
         "google-chrome-stable --password-store=basic --user-data-dir=/home/yuvalm/.config/google-chrome-startup-youtube --no-first-run --no-default-browser-check --disable-background-networking --disable-component-update --disable-sync --disable-extensions --new-window --app=https://www.youtube.com",
         "google-chrome-stable --password-store=basic --user-data-dir=/home/yuvalm/.config/google-chrome-startup-spotify --no-first-run --no-default-browser-check --disable-background-networking --disable-component-update --disable-sync --disable-extensions --new-window --app=https://open.spotify.com",
@@ -53,23 +52,123 @@ hl.on("hyprland.start", function()
     end
 end)
 
-local monitor_fix_scheduled = false
-local function schedule_monitor_fix()
-    if monitor_fix_scheduled then
-        return
+-- ---------------------------------------------------------------------------
+-- Monitor layout: PHILIPS ON TOP, LG ON THE BOTTOM, both at native resolution.
+-- Moving the pointer UP from the LG reaches the Philips. See MONITORS.md.
+--
+-- Monitors are identified by the EDID the kernel reads from each panel
+-- (/sys/class/drm/*/edid): manufacturer, product code and serial number. These
+-- are burned into the monitor and do not change with cables or ports.
+-- Do NOT identify monitors by connector name (DP-1/DP-2) or by Hyprland's own
+-- make/model/serial: Hyprland has been seen keeping stale EDID data for a
+-- connector, which swapped every label and the modes it drove.
+-- ---------------------------------------------------------------------------
+local MONITORS = {
+    top    = { edid = "PHL-49361-19827",  scale = 1 },  -- Philips PHL 243V5, 1920x1080
+    bottom = { edid = "GSM-23456-348447", scale = 1 },  -- LG HDR WFHD, 2560x1080
+}
+local TOP_MONITOR_WORKSPACES = { "4", "9" }  -- YouTube/Spotify and EasyEffects
+
+-- Returns id and native mode (first detailed timing) from raw EDID bytes, or
+-- nil if the EDID is missing or corrupt (it can be briefly, while waking up).
+local function parse_edid(d)
+    if not d or #d < 128 or d:sub(1, 8) ~= "\0\255\255\255\255\255\255\0" then
+        return nil
     end
-    monitor_fix_scheduled = true
-    hl.timer(function()
-        monitor_fix_scheduled = false
-        hl.exec_cmd(scripts .. "/setup-monitors")
-    end, { timeout = 1500, type = "oneshot" })
+    local function b(offset) return d:byte(offset + 1) end
+    local m = b(8) * 256 + b(9)
+    local vendor = string.char(64 + (m >> 10) % 32, 64 + (m >> 5) % 32, 64 + m % 32)
+    local product = b(10) + b(11) * 256
+    local serial = b(12) + b(13) * 256 + b(14) * 65536 + b(15) * 16777216
+    local clock = (b(54) + b(55) * 256) * 10000
+    local width, hblank = b(56) + (b(58) >> 4) * 256, b(57) + (b(58) % 16) * 256
+    local height, vblank = b(59) + (b(61) >> 4) * 256, b(60) + (b(61) % 16) * 256
+    return {
+        id = string.format("%s-%d-%d", vendor, product, serial),
+        width = width,
+        height = height,
+        refresh = clock / ((width + hblank) * (height + vblank)),
+    }
 end
 
--- Any monitor re-enumeration (resume, hotplug) or a config reload can drop the
--- layout back to Hyprland's side-by-side default, so re-assert it from events
--- rather than relying on a single resume hook.
-for _, event in ipairs({ "monitor.added", "monitor.removed", "config.reloaded" }) do
-    hl.on(event, schedule_monitor_fix)
+local function read_file(path, mode)
+    local f = io.open(path, mode or "r")
+    if not f then return nil end
+    local data = f:read("a")
+    f:close()
+    return data
+end
+
+-- Maps EDID id -> { output = connector name, edid = parsed EDID }.
+-- `incomplete` is true if a connected monitor had no readable EDID yet.
+local function connected_monitors()
+    local found, incomplete = {}, false
+    local ls = io.popen("ls /sys/class/drm")
+    for entry in ls:lines() do
+        local connector = entry:match("^card%d+%-(.+)$")
+        local dir = "/sys/class/drm/" .. entry
+        if connector and (read_file(dir .. "/status") or ""):match("^connected") then
+            local edid = parse_edid(read_file(dir .. "/edid", "rb"))
+            if edid then
+                found[edid.id] = { output = connector, edid = edid }
+            else
+                incomplete = true
+            end
+        end
+    end
+    ls:close()
+    return found, incomplete
+end
+
+local monitor_retries = 0
+
+-- Global so it can be run from outside, e.g. `hyprctl eval "apply_monitor_layout()"`.
+function apply_monitor_layout()
+    local found, incomplete = connected_monitors()
+    local top = found[MONITORS.top.edid]
+    local bottom = found[MONITORS.bottom.edid]
+
+    local function logical_size(mon, cfg)
+        if not mon then return 0, 0 end
+        return mon.edid.width / cfg.scale, mon.edid.height / cfg.scale
+    end
+    local top_w, top_h = logical_size(top, MONITORS.top)
+    local bottom_w = logical_size(bottom, MONITORS.bottom)
+    local total_w = math.max(top_w, bottom_w)
+
+    -- Top monitor at y=0, bottom monitor directly under it, centred on each other.
+    local function place(mon, cfg, width, y)
+        if not mon then return end
+        hl.monitor({
+            output = mon.output,
+            mode = string.format("%dx%d@%.3f", mon.edid.width, mon.edid.height, mon.edid.refresh),
+            position = string.format("%dx%d", math.floor((total_w - width) / 2), math.floor(y)),
+            scale = cfg.scale,
+        })
+    end
+    place(top, MONITORS.top, top_w, 0)
+    place(bottom, MONITORS.bottom, bottom_w, top_h)
+
+    if top then
+        for _, workspace in ipairs(TOP_MONITOR_WORKSPACES) do
+            hl.workspace_rule({ workspace = workspace, monitor = top.output })
+        end
+    end
+
+    -- A monitor that is still waking up may not have a readable EDID yet.
+    if incomplete and monitor_retries < 10 then
+        monitor_retries = monitor_retries + 1
+        hl.timer(apply_monitor_layout, { timeout = 1000, type = "oneshot" })
+    else
+        monitor_retries = 0
+    end
+end
+
+-- Runs on every config load (Hyprland start and every reload), on hotplug or
+-- monitor power-on, and after resume via hypridle.conf's after_sleep_cmd.
+apply_monitor_layout()
+for _, event in ipairs({ "monitor.added", "monitor.removed" }) do
+    hl.on(event, apply_monitor_layout)
 end
 
 hl.config({
@@ -190,10 +289,10 @@ bind("W", hl.dsp.layout("tabbed"))
 bind("SHIFT + SPACE", hl.dsp.window.float({ action = "toggle" }))
 bind("SPACE", hl.dsp.window.cycle_next())
 bind("A", hl.dsp.window.cycle_next({ prev = true }))
-bind("SHIFT + C", exec("hyprctl reload && " .. scripts .. "/setup-monitors"))
-bind("SHIFT + R", exec("hyprctl reload && " .. scripts .. "/setup-monitors"))
+bind("SHIFT + C", exec("hyprctl reload"))
+bind("SHIFT + R", exec("hyprctl reload"))
 bind("SHIFT + F9", exec("systemctl suspend"))
-bind("SHIFT + M", exec(scripts .. "/setup-monitors"))
+bind("SHIFT + M", function() apply_monitor_layout() end)
 bind("bracketleft", function() move_workspace_to_other_monitor(2) end)
 bind("SHIFT + T", function() move_workspace_to_other_monitor() end)
 
@@ -287,9 +386,8 @@ local startupWindowWorkspaces = {
     ["com.github.wwmm.easyeffects"] = 9,
 }
 
--- Workspaces 4 and 9 are pinned to the Philips by scripts/setup-monitors, which
--- resolves the panel by EDID serial. Do not hardcode a connector name here: it
--- would go stale the moment the cables are swapped.
+-- Workspaces 4 and 9 are pinned to the top monitor (the Philips) by
+-- apply_monitor_layout(), which finds it by EDID.
 
 hl.on("window.open_early", function(win)
     local workspace = startupWindowWorkspaces[win.class]

@@ -1,0 +1,47 @@
+// No "output" key: the bar appears on every monitor, so it never needs to know
+// which connector (DP-1/DP-2) a monitor is on.
+{
+  "layer": "top",
+  "position": "bottom",
+  "modules-left": ["hyprland/workspaces"],
+  "modules-center": [],
+  "modules-right": ["clock#date", "clock#tlv", "clock#seattle", "clock#london"],
+
+  "hyprland/workspaces": {
+    "disable-scroll": true,
+    "format": "{icon}",
+    "format-icons": {
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6",
+      "7": "7",
+      "8": "8",
+      "9": "9",
+      "10": "0",
+      "active": "●",
+      "default": "○"
+    }
+  },
+
+  "clock#date": {
+    "format": "{:%a %Y-%m-%d}"
+  },
+
+  "clock#tlv": {
+    "timezone": "Asia/Jerusalem",
+    "format": "TLV {:%H:%M}"
+  },
+
+  "clock#seattle": {
+    "timezone": "America/Los_Angeles",
+    "format": "SEA {:%H:%M}"
+  },
+
+  "clock#london": {
+    "timezone": "Europe/London",
+    "format": "LON {:%H:%M}"
+  }
+}
