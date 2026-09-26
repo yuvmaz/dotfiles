@@ -603,6 +603,38 @@ hl.layout.register("i3tree", {
                 hl.timer(function()
                     hl.dispatch(hl.dsp.focus({ window = nearest }))
                 end, { timeout = 1, type = "oneshot" })
+            else
+                -- If this workspace has no window in that direction, cross to
+                -- the nearest monitor in the same direction. Focusing its
+                -- active workspace also transfers focus to that monitor.
+                local current_monitor = hl.get_active_monitor()
+                local monitors = hl.get_monitors()
+                local best_monitor, best_score
+                if current_monitor then
+                    local cx = current_monitor.x + current_monitor.width / 2
+                    local cy = current_monitor.y + current_monitor.height / 2
+                    for _, monitor in ipairs(monitors) do
+                        if monitor.name ~= current_monitor.name then
+                            local mx = monitor.x + monitor.width / 2
+                            local my = monitor.y + monitor.height / 2
+                            local dx, dy = mx - cx, my - cy
+                            local primary, perpendicular
+                            if direction == "left" then primary, perpendicular = -dx, math.abs(dy)
+                            elseif direction == "right" then primary, perpendicular = dx, math.abs(dy)
+                            elseif direction == "up" then primary, perpendicular = -dy, math.abs(dx)
+                            else primary, perpendicular = dy, math.abs(dx) end
+                            local score = primary + perpendicular * 1.5
+                            if primary > 0 and (not best_score or score < best_score) then
+                                best_monitor, best_score = monitor, score
+                            end
+                        end
+                    end
+                end
+                if best_monitor and best_monitor.active_workspace then
+                    hl.timer(function()
+                        hl.dispatch(hl.dsp.focus({ workspace = best_monitor.active_workspace.name }))
+                    end, { timeout = 1, type = "oneshot" })
+                end
             end
             return true
         elseif command == "move" and directions[direction] then
