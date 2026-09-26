@@ -100,6 +100,7 @@ local function remove_leaf(node, id)
                 node.children[i] = updated
             else
                 table.remove(node.children, i)
+                if node.ratios then table.remove(node.ratios, i) end
             end
             return normalize(node), removed
         end
@@ -504,6 +505,7 @@ local function place_tree(node, targets, area)
         return
     end
 
+    node.last_area = area
     local n = #node.children
     local total_ratio, offset = 0, 0
     for i = 1, n do total_ratio = total_ratio + child_ratio(node, i) end
@@ -537,17 +539,19 @@ local function resize_toward(node, active_id, axis, delta)
             if resize_toward(child, active_id, axis, delta) then return true end
             if node.axis == axis then
                 local neighbor, active_change
+                local area_dimension = node.last_area and (axis == "h" and node.last_area.w or node.last_area.h) or 1
+                local ratio_delta = delta / math.max(1, area_dimension)
                 if delta > 0 then
                     if i < #node.children then
-                        neighbor, active_change = i + 1, delta
+                        neighbor, active_change = i + 1, ratio_delta
                     elseif i > 1 then
-                        neighbor, active_change = i - 1, -delta
+                        neighbor, active_change = i - 1, -ratio_delta
                     end
                 elseif delta < 0 then
                     if i > 1 then
-                        neighbor, active_change = i - 1, -delta
+                        neighbor, active_change = i - 1, -ratio_delta
                     elseif i < #node.children then
-                        neighbor, active_change = i + 1, delta
+                        neighbor, active_change = i + 1, ratio_delta
                     end
                 end
                 if neighbor then
@@ -583,36 +587,28 @@ hl.bind("SUPER + mouse:273", function()
         return
     end
 
-    local monitor = hl.get_active_monitor()
-    local dimension_x = monitor and monitor.width or 1920
-    local dimension_y = monitor and monitor.height or 1080
     local previous = hl.get_cursor_pos()
     local window_id = tostring(window.stable_id)
+    local workspace_id = tostring(window.workspace.id)
     mouse_resize_timer = hl.timer(function()
         local current = hl.get_cursor_pos()
         local dx, dy = current.x - previous.x, current.y - previous.y
         previous = current
         if dx ~= 0 or dy ~= 0 then
-            local active = hl.get_active_window()
-            if active and tostring(active.stable_id) == window_id then
-                local state = states[tostring(active.workspace.id)]
-                if state then
-                    local changed = false
-                    if math.abs(dx) >= math.abs(dy) then
-                        changed = resize_toward(state.root, window_id, "h", dx / dimension_x)
-                    else
-                        changed = resize_toward(state.root, window_id, "v", dy / dimension_y)
-                    end
-                    if changed then
-                        hl.dispatch(hl.dsp.layout("refresh"))
-                    end
+            local state = states[workspace_id]
+            if state then
+                local changed_x = dx ~= 0 and resize_toward(state.root, window_id, "h", dx)
+                local changed_y = dy ~= 0 and resize_toward(state.root, window_id, "v", dy)
+                local changed = changed_x or changed_y
+                if changed then
+                    hl.dispatch(hl.dsp.layout("refresh"))
                 end
             end
         end
     end, { timeout = 16, type = "repeat" })
 end, { mouse = true })
 
-hl.bind("SUPER + mouse:273", stop_mouse_resize, { release = true })
+hl.bind("mouse:273", stop_mouse_resize, { release = true, ignore_mods = true })
 
 hl.layout.register("i3tree", {
     recalculate = function(ctx)
