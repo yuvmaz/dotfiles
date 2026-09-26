@@ -4,13 +4,20 @@ local directions = { left = true, right = true, up = true, down = true }
 
 local GAP_IN = 5
 local GAP_OUT = 20
+local MIN_SPLIT = 0.08
 
 local function leaf(id)
     return { id = id }
 end
 
 local function split(axis, children)
-    return { axis = axis, children = children }
+    local ratios = {}
+    for i = 1, #children do ratios[i] = 1 / #children end
+    return { axis = axis, children = children, ratios = ratios }
+end
+
+local function child_ratio(node, index)
+    return node.ratios and node.ratios[index] or (1 / #node.children)
 end
 
 local function is_leaf(node)
@@ -36,16 +43,23 @@ local function normalize(node)
     if not node or is_leaf(node) then
         return node
     end
-    local children = {}
-    for _, child in ipairs(node.children) do
+    local children, ratios = {}, {}
+    local total = 0
+    for i = 1, #node.children do total = total + child_ratio(node, i) end
+    for i, child in ipairs(node.children) do
+        local parent_ratio = child_ratio(node, i) / total
         child = normalize(child)
         if child then
             if not is_leaf(child) and child.axis == node.axis then
-                for _, grandchild in ipairs(child.children) do
+                local child_total = 0
+                for j = 1, #child.children do child_total = child_total + child_ratio(child, j) end
+                for j, grandchild in ipairs(child.children) do
                     table.insert(children, grandchild)
+                    table.insert(ratios, parent_ratio * child_ratio(child, j) / child_total)
                 end
             else
                 table.insert(children, child)
+                table.insert(ratios, parent_ratio)
             end
         end
     end
@@ -56,7 +70,17 @@ local function normalize(node)
         return children[1]
     end
     node.children = children
+    node.ratios = ratios
     return node
+end
+
+local function insert_child(node, index, child)
+    local count, ratios = #node.children, {}
+    local added_share = 1 / (count + 1)
+    for i = 1, count do ratios[i] = child_ratio(node, i) * (1 - added_share) end
+    table.insert(node.children, index, child)
+    table.insert(ratios, index, added_share)
+    node.ratios = ratios
 end
 
 local function remove_leaf(node, id)
@@ -93,7 +117,7 @@ local function insert_after(node, anchor_id, inserted, axis)
     for i, child in ipairs(node.children) do
         if contains(child, anchor_id) then
             if node.axis == axis then
-                table.insert(node.children, i + 1, inserted)
+                insert_child(node, i + 1, inserted)
                 return node, true
             end
             local updated, done = insert_after(child, anchor_id, inserted, axis)
@@ -114,7 +138,7 @@ local function insert_before(node, anchor_id, inserted, axis)
     for i, child in ipairs(node.children) do
         if contains(child, anchor_id) then
             if node.axis == axis then
-                table.insert(node.children, i, inserted)
+                insert_child(node, i, inserted)
                 return node, true
             end
             local updated, done = insert_before(child, anchor_id, inserted, axis)
@@ -481,26 +505,114 @@ local function place_tree(node, targets, area)
     end
 
     local n = #node.children
+    local total_ratio, offset = 0, 0
+    for i = 1, n do total_ratio = total_ratio + child_ratio(node, i) end
     for i, child in ipairs(node.children) do
         local child_area
+        local fraction = child_ratio(node, i) / total_ratio
         if node.axis == "h" then
             child_area = {
-                x = area.x + area.w * (i - 1) / n,
+                x = area.x + area.w * offset,
                 y = area.y,
-                w = area.w / n,
+                w = area.w * fraction,
                 h = area.h,
             }
         else
             child_area = {
                 x = area.x,
-                y = area.y + area.h * (i - 1) / n,
+                y = area.y + area.h * offset,
                 w = area.w,
-                h = area.h / n,
+                h = area.h * fraction,
             }
         end
         place_tree(child, targets, child_area)
+        offset = offset + fraction
     end
 end
+
+local function resize_toward(node, active_id, axis, delta)
+    if is_leaf(node) then return false end
+    for i, child in ipairs(node.children) do
+        if contains(child, active_id) then
+            if resize_toward(child, active_id, axis, delta) then return true end
+            if node.axis == axis then
+                local neighbor, active_change
+                if delta > 0 then
+                    if i < #node.children then
+                        neighbor, active_change = i + 1, delta
+                    elseif i > 1 then
+                        neighbor, active_change = i - 1, -delta
+                    end
+                elseif delta < 0 then
+                    if i > 1 then
+                        neighbor, active_change = i - 1, -delta
+                    elseif i < #node.children then
+                        neighbor, active_change = i + 1, delta
+                    end
+                end
+                if neighbor then
+                    local amount = math.abs(active_change)
+                    local active_ratio, neighbor_ratio = child_ratio(node, i), child_ratio(node, neighbor)
+                    amount = math.min(amount, active_change > 0 and (neighbor_ratio - MIN_SPLIT) or (active_ratio - MIN_SPLIT))
+                    if amount > 0 then
+                        node.ratios[i] = active_ratio + (active_change > 0 and amount or -amount)
+                        node.ratios[neighbor] = neighbor_ratio + (active_change > 0 and -amount or amount)
+                        return true
+                    end
+                end
+            end
+        end
+    end
+    return false
+end
+
+local mouse_resize_timer
+local function stop_mouse_resize()
+    if mouse_resize_timer then
+        mouse_resize_timer:set_enabled(false)
+        mouse_resize_timer = nil
+    end
+end
+
+hl.bind("SUPER + mouse:273", function()
+    stop_mouse_resize()
+    local window = hl.get_active_window()
+    if not window then return end
+    if window.floating then
+        hl.dispatch(hl.dsp.window.resize())
+        return
+    end
+
+    local monitor = hl.get_active_monitor()
+    local dimension_x = monitor and monitor.width or 1920
+    local dimension_y = monitor and monitor.height or 1080
+    local previous = hl.get_cursor_pos()
+    local window_id = tostring(window.stable_id)
+    mouse_resize_timer = hl.timer(function()
+        local current = hl.get_cursor_pos()
+        local dx, dy = current.x - previous.x, current.y - previous.y
+        previous = current
+        if dx ~= 0 or dy ~= 0 then
+            local active = hl.get_active_window()
+            if active and tostring(active.stable_id) == window_id then
+                local state = states[tostring(active.workspace.id)]
+                if state then
+                    local changed = false
+                    if math.abs(dx) >= math.abs(dy) then
+                        changed = resize_toward(state.root, window_id, "h", dx / dimension_x)
+                    else
+                        changed = resize_toward(state.root, window_id, "v", dy / dimension_y)
+                    end
+                    if changed then
+                        hl.dispatch(hl.dsp.layout("refresh"))
+                    end
+                end
+            end
+        end
+    end, { timeout = 16, type = "repeat" })
+end, { mouse = true })
+
+hl.bind("SUPER + mouse:273", stop_mouse_resize, { release = true })
 
 hl.layout.register("i3tree", {
     recalculate = function(ctx)
@@ -642,6 +754,8 @@ hl.layout.register("i3tree", {
                 state.presentation = nil
                 move_window(state, active_id, direction, sync(state, ctx))
             end
+            return true
+        elseif command == "refresh" then
             return true
         elseif command == "togglesplit" then
             if state and active_id then

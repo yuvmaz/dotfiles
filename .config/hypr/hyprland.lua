@@ -324,7 +324,6 @@ bind("SHIFT + N", hl.dsp.focus({ workspace = "e+1", on_current_monitor = true })
 bind("mouse_down", hl.dsp.focus({ workspace = "e+1" }))
 bind("mouse_up", hl.dsp.focus({ workspace = "e-1" }))
 bind("mouse:272", hl.dsp.window.drag(), { mouse = true })
-bind("mouse:273", hl.dsp.window.resize(), { mouse = true })
 
 local repeating = { locked = true, repeating = true }
 for _, media in ipairs({
