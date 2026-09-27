@@ -608,7 +608,15 @@ hl.bind("SUPER + mouse:273", function()
     end, { timeout = 16, type = "repeat" })
 end, { mouse = true })
 
-hl.bind("mouse:273", stop_mouse_resize, { release = true, ignore_mods = true })
+-- Always stop a resize when the initiating right-drag ends, but pass the
+-- mouse events through so applications can use ordinary right-drag gestures.
+hl.bind("mouse:273", stop_mouse_resize, { release = true, ignore_mods = true, non_consuming = true })
+
+-- Also stop if Super is released first; this avoids leaving the resize timer
+-- active while waiting for the mouse button to come up.
+for _, key in ipairs({ "SUPER_L", "SUPER_R" }) do
+    hl.bind("SUPER + " .. key, stop_mouse_resize, { release = true })
+end
 
 hl.layout.register("i3tree", {
     recalculate = function(ctx)
