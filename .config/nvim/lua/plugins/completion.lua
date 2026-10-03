@@ -6,18 +6,12 @@ return {
     {
       "saghen/blink.compat",
       version = "2.*",
-      opts = {},
+      opts = { impersonate_nvim_cmp = true },
     },
     "L3MON4D3/LuaSnip",
     "rafamadriz/friendly-snippets",
   },
   opts = {
-    compat = {
-      "avante_commands",
-      "avante_mentions",
-      "avante_files",
-      "avante_shortcuts",
-    },
     snippets = { preset = "luasnip" },
     keymap = {
       preset = "none",
@@ -41,19 +35,12 @@ return {
         "avante_commands",
         "avante_mentions",
         "avante_shortcuts",
-        "avante_files",
       },
       providers = {
         avante_commands = {
           name = "avante_commands",
           module = "blink.compat.source",
           score_offset = 90,
-          opts = {},
-        },
-        avante_files = {
-          name = "avante_files",
-          module = "blink.compat.source",
-          score_offset = 100,
           opts = {},
         },
         avante_mentions = {

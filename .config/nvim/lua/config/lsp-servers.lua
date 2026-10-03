@@ -1,7 +1,9 @@
 local ok_store, schemastore = pcall(require, "schemastore")
+local ok_blink, blink = pcall(require, "blink.cmp")
 
 vim.lsp.config("*", {
-  capabilities = require("blink.cmp").get_lsp_capabilities(),
+  capabilities = ok_blink and blink.get_lsp_capabilities()
+    or vim.lsp.protocol.make_client_capabilities(),
 })
 
 vim.lsp.config("html", {
@@ -57,7 +59,10 @@ vim.lsp.config("ruff", {
 vim.lsp.config("lua_ls", {
   cmd = { "lua-language-server" }, -- resolved from mise shims via config.env
   filetypes = { "lua" },
-  root_markers = { ".luarc.json", ".luarc.jsonc", ".stylua.toml", "stylua.toml", ".git" },
+  -- Same ".git" exclusion as basedpyright above: home (~) is itself a git repo,
+  -- so without this any Lua file under ~ roots the workspace at ~ and lua_ls
+  -- refuses to load it ("refused to load this directory").
+  root_markers = { ".luarc.json", ".luarc.jsonc", ".stylua.toml", "stylua.toml" },
   settings = {
     Lua = {
       runtime = { version = "LuaJIT" },

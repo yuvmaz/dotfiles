@@ -19,6 +19,13 @@ preferred timing from the first detailed timing descriptor, then assigns the
 Hyprland connector and lays out the panels vertically. The EDID identity belongs
 to the monitor, so it remains the same when cables or ports change.
 
+While Hyprland is running, it remembers each connector's last readable EDID and
+native mode. If a connected panel's EDID is temporarily unreadable after wake,
+it uses that connector's last verified identity and mode to restore the layout.
+Freshly readable EDIDs always take priority, including when cables are moved.
+The cache is in memory; a config reload or Hyprland restart starts with an
+empty cache.
+
 The function runs:
 
 - when Hyprland starts and whenever its configuration reloads
@@ -27,8 +34,10 @@ The function runs:
 - on demand with `SUPER+SHIFT+M`
 
 If a connected monitor's EDID is temporarily unavailable during wake, the
-function retries once per second for up to 10 attempts. Workspaces 4 and 9 are
-pinned to the Philips. Waybar and hyprpaper are not pinned to connector names.
+function retries once per second for up to 10 attempts, even when a cached
+identity is available. Workspaces 4 and 9 have rules targeting the Philips;
+existing instances are moved there when the layout is restored.
+Waybar and hyprpaper are not pinned to connector names.
 
 Startup and suspend/resume have both been confirmed working. To inspect the
 kernel's current monitor identities and preferred modes:

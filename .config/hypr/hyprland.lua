@@ -99,10 +99,14 @@ local function read_file(path, mode)
     return data
 end
 
+-- Remember the last verified EDID for each connector while Hyprland is running.
+-- This lets us restore a waking panel before its EDID becomes readable again.
+local last_edid_by_output = {}
+
 -- Maps EDID id -> { output = connector name, edid = parsed EDID }.
 -- `incomplete` is true if a connected monitor had no readable EDID yet.
 local function connected_monitors()
-    local found, incomplete = {}, false
+    local found, missing_edid = {}, {}
     local ls = io.popen("ls /sys/class/drm")
     for entry in ls:lines() do
         local connector = entry:match("^card%d+%-(.+)$")
@@ -110,17 +114,27 @@ local function connected_monitors()
         if connector and (read_file(dir .. "/status") or ""):match("^connected") then
             local edid = parse_edid(read_file(dir .. "/edid", "rb"))
             if edid then
+                last_edid_by_output[connector] = edid
                 found[edid.id] = { output = connector, edid = edid }
             else
-                incomplete = true
+                missing_edid[connector] = true
             end
         end
     end
     ls:close()
-    return found, incomplete
+    -- Verified EDIDs take precedence: if a panel moved to another connector,
+    -- don't also assign its old connector while that connector's EDID is missing.
+    for connector in pairs(missing_edid) do
+        local edid = last_edid_by_output[connector]
+        if edid and not found[edid.id] then
+            found[edid.id] = { output = connector, edid = edid }
+        end
+    end
+    return found, next(missing_edid) ~= nil
 end
 
 local monitor_retries = 0
+local monitor_retry_pending = false
 
 -- Global so it can be run from outside, e.g. `hyprctl eval "apply_monitor_layout()"`.
 function apply_monitor_layout()
@@ -152,14 +166,28 @@ function apply_monitor_layout()
     if top then
         for _, workspace in ipairs(TOP_MONITOR_WORKSPACES) do
             hl.workspace_rule({ workspace = workspace, monitor = top.output })
+            -- The rule places newly created workspaces, but does not relocate
+            -- ones that already exist when a monitor returns or config reloads.
+            for _, existing in ipairs(hl.get_workspaces()) do
+                if existing.name == workspace and existing.monitor.name ~= top.output then
+                    hl.dispatch(hl.dsp.workspace.move({
+                        workspace = workspace,
+                        monitor = top.output,
+                    }))
+                end
+            end
         end
     end
 
     -- A monitor that is still waking up may not have a readable EDID yet.
-    if incomplete and monitor_retries < 10 then
+    if incomplete and monitor_retries < 10 and not monitor_retry_pending then
         monitor_retries = monitor_retries + 1
-        hl.timer(apply_monitor_layout, { timeout = 1000, type = "oneshot" })
-    else
+        monitor_retry_pending = true
+        hl.timer(function()
+            monitor_retry_pending = false
+            apply_monitor_layout()
+        end, { timeout = 1000, type = "oneshot" })
+    elseif not incomplete or (monitor_retries >= 10 and not monitor_retry_pending) then
         monitor_retries = 0
     end
 end

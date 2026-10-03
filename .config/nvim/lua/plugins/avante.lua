@@ -6,6 +6,7 @@ return {
   dependencies = {
     "nvim-lua/plenary.nvim",
     "MunifTanjim/nui.nvim",
+    { "ColinKennedy/mega.cmdparse", dependencies = { "ColinKennedy/mega.logging" } },
     {
       "MeanderingProgrammer/render-markdown.nvim",
       opts = { file_types = { "markdown", "Avante" } },
