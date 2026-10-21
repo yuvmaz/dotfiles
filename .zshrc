@@ -15,6 +15,7 @@ plugins=(
     z
     azure
     kubectl
+    argocd
     helm
     fzf-tab
     zsh-autosuggestions
@@ -109,6 +110,7 @@ _load_completion uv uv generate-shell-completion zsh
 _load_completion uvx uvx --generate-shell-completion zsh
 _load_completion ruff ruff generate-shell-completion zsh
 _load_completion gh gh completion --shell zsh
+_load_completion flux flux completion zsh
 _load_completion opencode opencode completion zsh
 unfunction _load_completion
 
