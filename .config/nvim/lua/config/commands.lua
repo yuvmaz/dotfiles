@@ -1,4 +1,5 @@
 local api = vim.api
+local env = require("config.env")
 
 local function shell_command(args)
   return table.concat(vim.tbl_map(vim.fn.shellescape, args), " ")
@@ -68,15 +69,18 @@ api.nvim_create_autocmd("FileType", {
   pattern = "python",
   callback = function()
     api.nvim_buf_create_user_command(0, "PyRun", function(cmd)
-      open_terminal(vim.list_extend({ "python", vim.fn.expand("%:p") }, cmd.fargs), { layout = "tab" })
+      local python = env.activate_python_env(0)
+      open_terminal(vim.list_extend({ python, vim.fn.expand("%:p") }, cmd.fargs), { layout = "tab" })
     end, { nargs = "*", desc = "Run current python file" })
 
     api.nvim_buf_create_user_command(0, "PyDebug", function(cmd)
-      open_terminal(vim.list_extend({ "python", "-m", "pdb", vim.fn.expand("%:p") }, cmd.fargs), { layout = "tab" })
+      local python = env.activate_python_env(0)
+      open_terminal(vim.list_extend({ python, "-m", "pdb", vim.fn.expand("%:p") }, cmd.fargs), { layout = "tab" })
     end, { nargs = "*", desc = "Debug current python file" })
 
     api.nvim_buf_create_user_command(0, "PyTest", function(cmd)
-      open_terminal(vim.list_extend({ "python", "-m", "pytest" }, cmd.fargs))
+      local python = env.activate_python_env(0)
+      open_terminal(vim.list_extend({ python, "-m", "pytest" }, cmd.fargs))
     end, { nargs = "*", desc = "Run pytest" })
 
     api.nvim_buf_create_user_command(0, "Pydoc", function(cmd)

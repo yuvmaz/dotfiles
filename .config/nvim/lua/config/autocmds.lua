@@ -1,5 +1,6 @@
 local api = vim.api
 local group = api.nvim_create_augroup("CoreConfig", { clear = true })
+local env = require("config.env")
 
 api.nvim_create_autocmd("TextYankPost", {
   group = group,
@@ -28,5 +29,12 @@ api.nvim_create_autocmd("FileType", {
     vim.opt_local.tabstop = 4
     vim.opt_local.shiftwidth = 4
     vim.opt_local.softtabstop = 4
+  end,
+})
+
+api.nvim_create_autocmd({ "VimEnter", "BufEnter", "DirChanged" }, {
+  group = group,
+  callback = function(args)
+    env.activate_python_env(args.buf)
   end,
 })
